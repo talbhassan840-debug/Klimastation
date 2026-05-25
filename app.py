@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 
 
 DB_PATH = "raumklima.db"
+SERVER_PORT = 5001
 
 app = Flask(__name__)
 
@@ -122,4 +123,4 @@ def health():
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=SERVER_PORT, debug=True)
