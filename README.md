@@ -17,6 +17,12 @@ Der Server laeuft danach auf:
 http://0.0.0.0:5001
 ```
 
+Das Webfrontend ist unter der Startseite erreichbar:
+
+```text
+http://<SERVER-IP>:5001/
+```
+
 Vom ESP32 aus wird spaeter die IP-Adresse des Raspberry Pi oder Laptops verwendet:
 
 ```text

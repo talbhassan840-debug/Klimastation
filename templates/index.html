@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Klimastation Raumklima</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: "#eefbf2",
+                            100: "#d9f5e0",
+                            500: "#16a34a",
+                            600: "#15803d",
+                            900: "#12301d"
+                        }
+                    },
+                    boxShadow: {
+                        soft: "0 18px 50px rgba(15, 23, 42, 0.08)"
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+    <div class="min-h-screen lg:grid lg:grid-cols-[270px_1fr]">
+        <aside class="border-b border-slate-200 bg-white lg:min-h-screen lg:border-b-0 lg:border-r">
+            <div class="flex h-full flex-col px-6 py-7">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 20A7 7 0 0 1 4 13c0-5 7-9 16-9 0 9-4 16-9 16Z"/>
+                            <path d="M8 14c1.5-1.5 4-2 7-2"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-normal">Klimastation</h1>
+                        <p class="text-sm font-semibold text-brand-600">Raumklima</p>
+                    </div>
+                </div>
+
+                <nav class="mt-10 grid gap-2 text-sm font-semibold text-slate-500">
+                    <a class="flex items-center gap-3 rounded-lg bg-brand-50 px-4 py-3 text-brand-600" href="/">
+                        <span class="icon-box">⌂</span>
+                        Übersicht
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#measurements">
+                        <span class="icon-box">⌁</span>
+                        Messwerte
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#charts">
+                        <span class="icon-box">▥</span>
+                        Diagramme
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#database">
+                        <span class="icon-box">◎</span>
+                        Datenbank
+                    </a>
+                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#settings">
+                        <span class="icon-box">⚙</span>
+                        Einstellungen
+                    </a>
+                </nav>
+
+                <div class="mt-8 rounded-lg border border-slate-200 bg-white p-4 text-sm lg:mt-auto">
+                    <div class="flex items-center gap-2 font-semibold text-slate-700">
+                        <span id="station-dot" class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
+                        <span id="station-state">Station wird geprüft</span>
+                    </div>
+                    <p id="station-detail" class="mt-2 text-xs text-slate-500">Warte auf Messdaten</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="px-5 py-6 sm:px-8 lg:px-10">
+            <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold tracking-normal">Übersicht</h2>
+                    <p class="mt-2 text-sm text-slate-500">Aktuelle Raumklima-Messwerte</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-sm">
+                    <p class="font-semibold text-slate-600">Letzte Aktualisierung: <span id="last-updated">-</span></p>
+                    <div class="flex items-center gap-2 font-semibold text-brand-600">
+                        <span class="h-2.5 w-2.5 rounded-full bg-brand-500"></span>
+                        Live
+                    </div>
+                </div>
+            </header>
+
+            <section class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                <article class="metric-card">
+                    <div class="metric-icon">♨</div>
+                    <p class="metric-label">Temperatur</p>
+                    <p class="metric-value"><span id="temperature-current">-</span> <span>°C</span></p>
+                    <p class="metric-foot">Aktuell</p>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-icon">♢</div>
+                    <p class="metric-label">Luftfeuchtigkeit</p>
+                    <p class="metric-value"><span id="humidity-current">-</span> <span>%</span></p>
+                    <p class="metric-foot">Aktuell</p>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-icon">◴</div>
+                    <p class="metric-label">Luftdruck</p>
+                    <p class="metric-value"><span id="pressure-current">-</span> <span>hPa</span></p>
+                    <p class="metric-foot">Aktuell</p>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-icon">CO₂</div>
+                    <p class="metric-label">CO₂</p>
+                    <p class="metric-value"><span id="co2-current">-</span> <span>ppm</span></p>
+                    <p class="metric-foot">Aktuell</p>
+                </article>
+            </section>
+
+            <section id="charts" class="mt-5 grid gap-5 xl:grid-cols-2">
+                <article class="panel">
+                    <div class="flex items-center justify-between">
+                        <h3 class="panel-title">Temperatur (°C)</h3>
+                        <select class="time-select" aria-label="Zeitraum Temperatur">
+                            <option>24h</option>
+                            <option>7d</option>
+                        </select>
+                    </div>
+                    <canvas id="temperature-chart" class="mt-5 h-64 w-full"></canvas>
+                </article>
+                <article class="panel">
+                    <div class="flex items-center justify-between">
+                        <h3 class="panel-title">Luftfeuchtigkeit (%)</h3>
+                        <select class="time-select" aria-label="Zeitraum Luftfeuchtigkeit">
+                            <option>24h</option>
+                            <option>7d</option>
+                        </select>
+                    </div>
+                    <canvas id="humidity-chart" class="mt-5 h-64 w-full"></canvas>
+                </article>
+            </section>
+
+            <section id="measurements" class="panel mt-5 overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <h3 class="panel-title">Letzte Messwerte</h3>
+                    <button id="refresh-button" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Aktualisieren</button>
+                </div>
+                <div class="mt-4 overflow-x-auto">
+                    <table id="database" class="w-full min-w-[780px] text-left text-sm">
+                        <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                            <tr>
+                                <th class="py-3 pr-4">Zeit</th>
+                                <th class="px-4 py-3">Temperatur (°C)</th>
+                                <th class="px-4 py-3">Luftfeuchtigkeit (%)</th>
+                                <th class="px-4 py-3">Luftdruck (hPa)</th>
+                                <th class="py-3 pl-4">CO₂ (ppm)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="measurements-table" class="divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td class="py-6 text-slate-400" colspan="5">Messwerte werden geladen</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="settings" class="sr-only">Einstellungen</section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

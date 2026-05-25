@@ -1,7 +1,7 @@
 from datetime import datetime
 import sqlite3
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, render_template, request
 
 
 DB_PATH = "raumklima.db"
@@ -85,6 +85,11 @@ def row_to_dict(row):
             "humidity_percent": row["scd41_humidity_percent"],
         },
     }
+
+
+@app.route("/", methods=["GET"])
+def dashboard():
+    return render_template("index.html")
 
 
 @app.route("/api/measurements", methods=["POST"])
