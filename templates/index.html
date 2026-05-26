@@ -119,7 +119,7 @@
                 </article>
             </section>
 
-            <section id="charts" class="mt-5 grid gap-5 xl:grid-cols-2">
+            <section id="charts" class="mt-5 grid gap-5 xl:grid-cols-3">
                 <article class="panel">
                     <div class="flex items-center justify-between">
                         <h3 class="panel-title">Temperatur (°C)</h3>
@@ -139,6 +139,16 @@
                         </select>
                     </div>
                     <canvas id="humidity-chart" class="mt-5 h-64 w-full"></canvas>
+                </article>
+                <article class="panel">
+                    <div class="flex items-center justify-between">
+                        <h3 class="panel-title">CO₂ (ppm)</h3>
+                        <select class="time-select" aria-label="Zeitraum CO2">
+                            <option>24h</option>
+                            <option>7d</option>
+                        </select>
+                    </div>
+                    <canvas id="co2-chart" class="mt-5 h-64 w-full"></canvas>
                 </article>
             </section>
 

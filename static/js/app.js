@@ -12,7 +12,8 @@ const elements = {
     table: document.getElementById("measurements-table"),
     refreshButton: document.getElementById("refresh-button"),
     temperatureChart: document.getElementById("temperature-chart"),
-    humidityChart: document.getElementById("humidity-chart")
+    humidityChart: document.getElementById("humidity-chart"),
+    co2Chart: document.getElementById("co2-chart")
 };
 
 function formatValue(value, digits = 1) {
@@ -88,7 +89,7 @@ function updateTable(measurements) {
     `).join("");
 }
 
-function drawChart(canvas, measurements, selector, color) {
+function drawChart(canvas, measurements, selector, color, decimals = 1) {
     const ctx = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
@@ -139,7 +140,7 @@ function drawChart(canvas, measurements, selector, color) {
         ctx.moveTo(padding.left, y);
         ctx.lineTo(width - padding.right, y);
         ctx.stroke();
-        ctx.fillText(label.toFixed(1), 6, y + 4);
+        ctx.fillText(label.toFixed(decimals), 6, y + 4);
     }
 
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
@@ -195,6 +196,7 @@ function drawChart(canvas, measurements, selector, color) {
 function updateCharts(measurements) {
     drawChart(elements.temperatureChart, measurements, (measurement) => measurement.bme280.temperature_c, "#16a34a");
     drawChart(elements.humidityChart, measurements, (measurement) => measurement.bme280.humidity_percent, "#2563eb");
+    drawChart(elements.co2Chart, measurements, (measurement) => measurement.scd41.co2_ppm, "#7c3aed", 0);
 }
 
 async function loadMeasurements() {
