@@ -1,4 +1,6 @@
-const API_URL = "/api/measurements?limit=48";
+const LATEST_API_URL = "/api/measurements?limit=8";
+const CHART_API_URL = "/api/measurements?hours=24";
+const DATABASE_API_URL = "/api/measurements?all=1";
 
 const elements = {
     lastUpdated: document.getElementById("last-updated"),
@@ -10,6 +12,8 @@ const elements = {
     pressure: document.getElementById("pressure-current"),
     co2: document.getElementById("co2-current"),
     table: document.getElementById("measurements-table"),
+    databaseTable: document.getElementById("database-table"),
+    databaseCount: document.getElementById("database-count"),
     refreshButton: document.getElementById("refresh-button"),
     temperatureChart: document.getElementById("temperature-chart"),
     humidityChart: document.getElementById("humidity-chart"),
@@ -38,6 +42,13 @@ function formatTime(timestamp) {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit"
+    });
+}
+
+function formatShortTime(date) {
+    return date.toLocaleTimeString("de-CH", {
+        hour: "2-digit",
+        minute: "2-digit"
     });
 }
 
@@ -72,7 +83,17 @@ function updateCards(measurements) {
     setStationState(true, "Verbindung aktiv");
 }
 
-function updateTable(measurements) {
+function measurementRow(measurement) {
+    return `
+        <td class="py-3 pr-4 font-semibold text-slate-700">${formatTime(measurement.timestamp)}</td>
+        <td class="px-4 py-3">${formatValue(measurement.bme280.temperature_c, 1)}</td>
+        <td class="px-4 py-3">${formatValue(measurement.bme280.humidity_percent, 1)}</td>
+        <td class="px-4 py-3">${formatValue(measurement.bme280.pressure_hpa, 1)}</td>
+        <td class="py-3 pl-4">${measurement.scd41.co2_ppm ?? "-"}</td>
+    `;
+}
+
+function updateRecentTable(measurements) {
     if (!measurements.length) {
         elements.table.innerHTML = `<tr><td class="py-6 text-slate-400" colspan="5">Noch keine Messwerte vorhanden</td></tr>`;
         return;
@@ -80,7 +101,24 @@ function updateTable(measurements) {
 
     elements.table.innerHTML = measurements.slice(0, 8).map((measurement) => `
         <tr class="hover:bg-slate-50">
-            <td class="py-3 pr-4 font-semibold text-slate-700">${formatTime(measurement.timestamp)}</td>
+            ${measurementRow(measurement)}
+        </tr>
+    `).join("");
+}
+
+function updateDatabaseTable(measurements) {
+    elements.databaseCount.textContent = measurements.length;
+
+    if (!measurements.length) {
+        elements.databaseTable.innerHTML = `<tr><td class="py-6 text-slate-400" colspan="7">Noch keine Datenbankeinträge vorhanden</td></tr>`;
+        return;
+    }
+
+    elements.databaseTable.innerHTML = measurements.map((measurement) => `
+        <tr class="hover:bg-slate-50">
+            <td class="py-3 pr-4 font-semibold text-slate-500">${measurement.id}</td>
+            <td class="px-4 py-3 font-semibold text-slate-700">${formatTime(measurement.timestamp)}</td>
+            <td class="px-4 py-3">${measurement.device}</td>
             <td class="px-4 py-3">${formatValue(measurement.bme280.temperature_c, 1)}</td>
             <td class="px-4 py-3">${formatValue(measurement.bme280.humidity_percent, 1)}</td>
             <td class="px-4 py-3">${formatValue(measurement.bme280.pressure_hpa, 1)}</td>
@@ -99,15 +137,19 @@ function drawChart(canvas, measurements, selector, color, decimals = 1) {
 
     const width = rect.width;
     const height = rect.height;
-    const padding = { top: 12, right: 14, bottom: 32, left: 42 };
+    const padding = { top: 12, right: 18, bottom: 38, left: 48 };
+    const now = new Date();
+    const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const points = measurements
         .slice()
-        .reverse()
         .map((measurement) => ({
-            timestamp: measurement.timestamp,
+            timestamp: new Date(measurement.timestamp),
             value: selector(measurement)
         }))
-        .filter((point) => point.value !== null && point.value !== undefined);
+        .filter((point) => !Number.isNaN(point.timestamp.getTime()))
+        .filter((point) => point.timestamp >= start && point.timestamp <= now)
+        .filter((point) => point.value !== null && point.value !== undefined)
+        .sort((a, b) => a.timestamp - b.timestamp);
 
     ctx.clearRect(0, 0, width, height);
     ctx.font = "12px Inter, system-ui, sans-serif";
@@ -115,7 +157,7 @@ function drawChart(canvas, measurements, selector, color, decimals = 1) {
 
     if (points.length < 2) {
         ctx.fillStyle = "#94a3b8";
-        ctx.fillText("Noch zu wenige Messwerte", padding.left, height / 2);
+        ctx.fillText("Noch zu wenige Messwerte in den letzten 24h", padding.left, height / 2);
         return;
     }
 
@@ -128,7 +170,7 @@ function drawChart(canvas, measurements, selector, color, decimals = 1) {
     const plotWidth = width - padding.left - padding.right;
     const plotHeight = height - padding.top - padding.bottom;
 
-    const xFor = (index) => padding.left + (points.length === 1 ? 0 : (index / (points.length - 1)) * plotWidth);
+    const xForTime = (date) => padding.left + ((date.getTime() - start.getTime()) / (now.getTime() - start.getTime())) * plotWidth;
     const yFor = (value) => padding.top + (1 - (value - yMin) / (yMax - yMin)) * plotHeight;
 
     ctx.strokeStyle = "#e2e8f0";
@@ -143,13 +185,25 @@ function drawChart(canvas, measurements, selector, color, decimals = 1) {
         ctx.fillText(label.toFixed(decimals), 6, y + 4);
     }
 
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.fillStyle = "#64748b";
+    for (let i = 0; i <= 4; i += 1) {
+        const x = padding.left + (i / 4) * plotWidth;
+        const date = new Date(start.getTime() + (i / 4) * (now.getTime() - start.getTime()));
+        ctx.beginPath();
+        ctx.moveTo(x, padding.top);
+        ctx.lineTo(x, height - padding.bottom);
+        ctx.stroke();
+        ctx.fillText(formatShortTime(date), x - 16, height - 10);
+    }
+
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
     gradient.addColorStop(0, `${color}30`);
     gradient.addColorStop(1, `${color}00`);
 
     ctx.beginPath();
     points.forEach((point, index) => {
-        const x = xFor(index);
+        const x = xForTime(point.timestamp);
         const y = yFor(point.value);
         if (index === 0) {
             ctx.moveTo(x, y);
@@ -157,15 +211,15 @@ function drawChart(canvas, measurements, selector, color, decimals = 1) {
             ctx.lineTo(x, y);
         }
     });
-    ctx.lineTo(xFor(points.length - 1), height - padding.bottom);
-    ctx.lineTo(xFor(0), height - padding.bottom);
+    ctx.lineTo(xForTime(points[points.length - 1].timestamp), height - padding.bottom);
+    ctx.lineTo(xForTime(points[0].timestamp), height - padding.bottom);
     ctx.closePath();
     ctx.fillStyle = gradient;
     ctx.fill();
 
     ctx.beginPath();
     points.forEach((point, index) => {
-        const x = xFor(index);
+        const x = xForTime(point.timestamp);
         const y = yFor(point.value);
         if (index === 0) {
             ctx.moveTo(x, y);
@@ -179,18 +233,13 @@ function drawChart(canvas, measurements, selector, color, decimals = 1) {
 
     ctx.fillStyle = color;
     points.forEach((point, index) => {
-        const x = xFor(index);
+        const x = xForTime(point.timestamp);
         const y = yFor(point.value);
         ctx.beginPath();
         ctx.arc(x, y, 3, 0, Math.PI * 2);
         ctx.fill();
     });
 
-    const first = points[0];
-    const last = points[points.length - 1];
-    ctx.fillStyle = "#64748b";
-    ctx.fillText(formatTime(first.timestamp).slice(12, 17), padding.left, height - 8);
-    ctx.fillText(formatTime(last.timestamp).slice(12, 17), width - padding.right - 34, height - 8);
 }
 
 function updateCharts(measurements) {
@@ -201,17 +250,28 @@ function updateCharts(measurements) {
 
 async function loadMeasurements() {
     try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        const [latestResponse, chartResponse, databaseResponse] = await Promise.all([
+            fetch(LATEST_API_URL),
+            fetch(CHART_API_URL),
+            fetch(DATABASE_API_URL)
+        ]);
+
+        if (!latestResponse.ok || !chartResponse.ok || !databaseResponse.ok) {
+            throw new Error("API Antwort fehlerhaft");
         }
-        const measurements = await response.json();
-        updateCards(measurements);
-        updateTable(measurements);
-        updateCharts(measurements);
+
+        const latestMeasurements = await latestResponse.json();
+        const chartMeasurements = await chartResponse.json();
+        const databaseMeasurements = await databaseResponse.json();
+
+        updateCards(latestMeasurements);
+        updateRecentTable(latestMeasurements);
+        updateCharts(chartMeasurements);
+        updateDatabaseTable(databaseMeasurements);
     } catch (error) {
         setStationState(false, "API nicht erreichbar");
         elements.table.innerHTML = `<tr><td class="py-6 text-red-500" colspan="5">Fehler beim Laden: ${error.message}</td></tr>`;
+        elements.databaseTable.innerHTML = `<tr><td class="py-6 text-red-500" colspan="7">Fehler beim Laden: ${error.message}</td></tr>`;
     }
 }
 

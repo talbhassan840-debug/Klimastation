@@ -123,30 +123,21 @@
                 <article class="panel">
                     <div class="flex items-center justify-between">
                         <h3 class="panel-title">Temperatur (°C)</h3>
-                        <select class="time-select" aria-label="Zeitraum Temperatur">
-                            <option>24h</option>
-                            <option>7d</option>
-                        </select>
+                        <span class="time-select">24h</span>
                     </div>
                     <canvas id="temperature-chart" class="mt-5 h-64 w-full"></canvas>
                 </article>
                 <article class="panel">
                     <div class="flex items-center justify-between">
                         <h3 class="panel-title">Luftfeuchtigkeit (%)</h3>
-                        <select class="time-select" aria-label="Zeitraum Luftfeuchtigkeit">
-                            <option>24h</option>
-                            <option>7d</option>
-                        </select>
+                        <span class="time-select">24h</span>
                     </div>
                     <canvas id="humidity-chart" class="mt-5 h-64 w-full"></canvas>
                 </article>
                 <article class="panel">
                     <div class="flex items-center justify-between">
                         <h3 class="panel-title">CO₂ (ppm)</h3>
-                        <select class="time-select" aria-label="Zeitraum CO2">
-                            <option>24h</option>
-                            <option>7d</option>
-                        </select>
+                        <span class="time-select">24h</span>
                     </div>
                     <canvas id="co2-chart" class="mt-5 h-64 w-full"></canvas>
                 </article>
@@ -171,6 +162,38 @@
                         <tbody id="measurements-table" class="divide-y divide-slate-100 text-slate-700">
                             <tr>
                                 <td class="py-6 text-slate-400" colspan="5">Messwerte werden geladen</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="database" class="panel mt-5 overflow-hidden">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="panel-title">Alle Datenbankeinträge</h3>
+                        <p class="mt-1 text-sm text-slate-500">Vollständige SQLite-Historie seit Start der Aufzeichnung</p>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-500">
+                        Einträge: <span id="database-count">0</span>
+                    </div>
+                </div>
+                <div class="mt-4 max-h-[28rem] overflow-auto">
+                    <table class="w-full min-w-[920px] text-left text-sm">
+                        <thead class="sticky top-0 z-10 border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-400">
+                            <tr>
+                                <th class="py-3 pr-4">ID</th>
+                                <th class="px-4 py-3">Zeit</th>
+                                <th class="px-4 py-3">Gerät</th>
+                                <th class="px-4 py-3">Temperatur (°C)</th>
+                                <th class="px-4 py-3">Luftfeuchtigkeit (%)</th>
+                                <th class="px-4 py-3">Luftdruck (hPa)</th>
+                                <th class="py-3 pl-4">CO₂ (ppm)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="database-table" class="divide-y divide-slate-100 text-slate-700">
+                            <tr>
+                                <td class="py-6 text-slate-400" colspan="7">Datenbankeinträge werden geladen</td>
                             </tr>
                         </tbody>
                     </table>

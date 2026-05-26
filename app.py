@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 
 from flask import Flask, jsonify, render_template, request
@@ -106,17 +106,40 @@ def create_measurement():
 def list_measurements():
     limit = request.args.get("limit", default=50, type=int)
     limit = max(1, min(limit, 500))
+    hours = request.args.get("hours", type=int)
+    all_rows = request.args.get("all", default="0") == "1"
 
     with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT *
-            FROM measurements
-            ORDER BY id DESC
-            LIMIT ?
-            """,
-            (limit,),
-        ).fetchall()
+        if hours is not None:
+            hours = max(1, min(hours, 24 * 31))
+            since = (datetime.now() - timedelta(hours=hours)).isoformat(timespec="seconds")
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM measurements
+                WHERE timestamp >= ?
+                ORDER BY timestamp DESC, id DESC
+                """,
+                (since,),
+            ).fetchall()
+        elif all_rows:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM measurements
+                ORDER BY id DESC
+                """
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM measurements
+                ORDER BY id DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
 
     return jsonify([row_to_dict(row) for row in rows])
 
