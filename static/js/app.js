@@ -65,8 +65,8 @@ function updateCards(measurements) {
 
     elements.lastUpdated.textContent = formatTime(latest.timestamp);
     elements.temperature.textContent = formatValue(latest.bme280.temperature_c, 1);
-    elements.humidity.textContent = formatValue(latest.bme280.humidity_percent, 0);
-    elements.pressure.textContent = formatValue(latest.bme280.pressure_hpa, 0);
+    elements.humidity.textContent = formatValue(latest.bme280.humidity_percent, 1);
+    elements.pressure.textContent = formatValue(latest.bme280.pressure_hpa, 1);
     elements.co2.textContent = latest.scd41.co2_ppm ?? "-";
     setStationState(true, "Verbindung aktiv");
 }
@@ -81,8 +81,8 @@ function updateTable(measurements) {
         <tr class="hover:bg-slate-50">
             <td class="py-3 pr-4 font-semibold text-slate-700">${formatTime(measurement.timestamp)}</td>
             <td class="px-4 py-3">${formatValue(measurement.bme280.temperature_c, 1)}</td>
-            <td class="px-4 py-3">${formatValue(measurement.bme280.humidity_percent, 0)}</td>
-            <td class="px-4 py-3">${formatValue(measurement.bme280.pressure_hpa, 0)}</td>
+            <td class="px-4 py-3">${formatValue(measurement.bme280.humidity_percent, 1)}</td>
+            <td class="px-4 py-3">${formatValue(measurement.bme280.pressure_hpa, 1)}</td>
             <td class="py-3 pl-4">${measurement.scd41.co2_ppm ?? "-"}</td>
         </tr>
     `).join("");
@@ -139,7 +139,7 @@ function drawChart(canvas, measurements, selector, color) {
         ctx.moveTo(padding.left, y);
         ctx.lineTo(width - padding.right, y);
         ctx.stroke();
-        ctx.fillText(label.toFixed(0), 6, y + 4);
+        ctx.fillText(label.toFixed(1), 6, y + 4);
     }
 
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
