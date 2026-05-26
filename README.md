@@ -32,7 +32,7 @@ http://<SERVER-IP>:5001/api/measurements
 Aktuelle Laptop-IP im Heim-WLAN:
 
 ```text
-http://192.168.1.156:5001/api/measurements
+http://0.0.0.0:5001/api/measurements
 ```
 
 ## Test POST
