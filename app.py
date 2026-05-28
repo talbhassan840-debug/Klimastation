@@ -107,10 +107,22 @@ def list_measurements():
     limit = request.args.get("limit", default=50, type=int)
     limit = max(1, min(limit, 500))
     hours = request.args.get("hours", type=int)
+    from_timestamp = request.args.get("from")
+    to_timestamp = request.args.get("to")
     all_rows = request.args.get("all", default="0") == "1"
 
     with get_connection() as conn:
-        if hours is not None:
+        if from_timestamp and to_timestamp:
+            rows = conn.execute(
+                """
+                SELECT *
+                FROM measurements
+                WHERE timestamp >= ? AND timestamp <= ?
+                ORDER BY timestamp DESC, id DESC
+                """,
+                (from_timestamp, to_timestamp),
+            ).fetchall()
+        elif hours is not None:
             hours = max(1, min(hours, 24 * 31))
             since = (datetime.now() - timedelta(hours=hours)).isoformat(timespec="seconds")
             rows = conn.execute(

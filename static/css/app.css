@@ -6,6 +6,42 @@ body {
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.sidebar {
+    border-bottom: 1px solid rgb(226 232 240);
+    background: white;
+}
+
+.nav-menu {
+    display: grid;
+    gap: 0.5rem;
+    color: rgb(100 116 139);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.nav-link {
+    display: flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: #eefbf2;
+    color: #15803d;
+}
+
+.sub-link {
+    margin-left: 1.25rem;
+    min-height: 2.25rem;
+    padding-block: 0.45rem;
+    font-size: 0.82rem;
+}
+
 .icon-box {
     display: inline-flex;
     width: 1.5rem;
@@ -16,12 +52,22 @@ body {
     line-height: 1;
 }
 
+.status-panel,
 .metric-card,
 .panel {
     border: 1px solid rgb(226 232 240);
     border-radius: 0.5rem;
     background: white;
     box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+}
+
+.status-panel {
+    padding: 1rem;
+    color: rgb(51 65 85);
+}
+
+.status-panel p {
+    color: rgb(100 116 139);
 }
 
 .metric-card {
@@ -66,6 +112,56 @@ body {
     font-size: 0.9rem;
 }
 
+.status-pill {
+    border-radius: 999px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.co2-good .status-pill {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.co2-warning .status-pill {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.co2-danger .status-pill {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.co2-warning .metric-value {
+    color: #d97706;
+}
+
+.co2-danger .metric-value {
+    color: #dc2626;
+}
+
+.co2-scale {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    overflow: hidden;
+    border-radius: 999px;
+    height: 0.55rem;
+}
+
+.co2-scale span:nth-child(1) {
+    background: #22c55e;
+}
+
+.co2-scale span:nth-child(2) {
+    background: #f59e0b;
+}
+
+.co2-scale span:nth-child(3) {
+    background: #ef4444;
+}
+
 .panel {
     padding: 1.5rem;
 }
@@ -76,17 +172,229 @@ body {
     font-weight: 800;
 }
 
-.time-select {
+.time-select,
+.control-button {
     border-radius: 0.5rem;
     border: 1px solid rgb(226 232 240);
     background: white;
-    padding: 0.45rem 0.65rem;
+    padding: 0.55rem 0.75rem;
     color: rgb(51 65 85);
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 800;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-canvas {
+.control-button:hover {
+    background: rgb(248 250 252);
+    border-color: rgb(203 213 225);
+}
+
+.selection-box {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(226 232 240);
+    background: rgb(248 250 252);
+    color: rgb(71 85 105);
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.8rem 1rem;
+}
+
+.chart-canvas {
     display: block;
+    width: 100%;
+    height: 16rem;
     max-height: 16rem;
+    cursor: crosshair;
+    touch-action: manipulation;
+}
+
+.data-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.data-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: white;
+    color: rgb(148 163 184);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.data-table th {
+    border-bottom: 1px solid rgb(226 232 240);
+    padding: 0.75rem 1rem;
+    font-weight: 800;
+}
+
+.data-table th:first-child,
+.data-table td:first-child {
+    padding-left: 0;
+}
+
+.data-table td {
+    border-bottom: 1px solid rgb(241 245 249);
+    color: rgb(51 65 85);
+    padding: 0.75rem 1rem;
+}
+
+.data-table tbody tr:hover td {
+    background: rgb(248 250 252);
+}
+
+.empty-cell {
+    color: rgb(148 163 184) !important;
+    padding: 1.5rem 0 !important;
+}
+
+.toggle-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgb(51 65 85);
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.toggle-row input {
+    position: absolute;
+    opacity: 0;
+}
+
+.toggle-track {
+    position: relative;
+    display: inline-block;
+    width: 3.1rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: rgb(203 213 225);
+    transition: background 0.15s ease;
+}
+
+.toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+    transition: transform 0.15s ease;
+}
+
+.toggle-row input:checked + .toggle-track {
+    background: #16a34a;
+}
+
+.toggle-row input:checked + .toggle-track::after {
+    transform: translateX(1.35rem);
+}
+
+body.dark-mode {
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+body.dark-mode .sidebar,
+body.dark-mode .status-panel,
+body.dark-mode .metric-card,
+body.dark-mode .panel,
+body.dark-mode .time-select,
+body.dark-mode .control-button {
+    border-color: #263445;
+    background: #111c2e;
+    box-shadow: none;
+}
+
+body.dark-mode .nav-link {
+    color: #94a3b8;
+}
+
+body.dark-mode .nav-link:hover,
+body.dark-mode .nav-link.active {
+    background: rgba(34, 197, 94, 0.14);
+    color: #86efac;
+}
+
+body.dark-mode .panel-title,
+body.dark-mode .metric-label,
+body.dark-mode .status-panel,
+body.dark-mode .toggle-row {
+    color: #e2e8f0;
+}
+
+body.dark-mode .metric-foot,
+body.dark-mode .status-panel p,
+body.dark-mode .selection-box,
+body.dark-mode main p,
+body.dark-mode .time-select,
+body.dark-mode .control-button {
+    color: #94a3b8;
+}
+
+body.dark-mode .selection-box {
+    border-color: #263445;
+    background: #0f172a;
+}
+
+body.dark-mode .data-table thead {
+    background: #111c2e;
+    color: #94a3b8;
+}
+
+body.dark-mode .data-table th {
+    border-color: #263445;
+}
+
+body.dark-mode .data-table td {
+    border-color: #1e293b;
+    color: #cbd5e1;
+}
+
+body.dark-mode .data-table tbody tr:hover td {
+    background: #162235;
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        min-height: 100vh;
+        border-right: 1px solid rgb(226 232 240);
+        border-bottom: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .nav-menu {
+        display: flex;
+        gap: 0.45rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        white-space: nowrap;
+    }
+
+    .nav-link {
+        flex: 0 0 auto;
+        padding-inline: 0.8rem;
+    }
+
+    .sub-link {
+        margin-left: 0;
+    }
+
+    .metric-card,
+    .panel {
+        padding: 1.1rem;
+    }
+
+    .metric-value {
+        font-size: 1.9rem;
+    }
+
+    .chart-canvas {
+        height: 14rem;
+    }
 }

@@ -29,8 +29,8 @@
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
     <div class="min-h-screen lg:grid lg:grid-cols-[270px_1fr]">
-        <aside class="border-b border-slate-200 bg-white lg:min-h-screen lg:border-b-0 lg:border-r">
-            <div class="flex h-full flex-col px-6 py-7">
+        <aside class="sidebar">
+            <div class="flex h-full flex-col px-5 py-5 lg:px-6 lg:py-7">
                 <div class="flex items-center gap-3">
                     <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -44,131 +44,171 @@
                     </div>
                 </div>
 
-                <nav class="mt-10 grid gap-2 text-sm font-semibold text-slate-500">
-                    <a class="flex items-center gap-3 rounded-lg bg-brand-50 px-4 py-3 text-brand-600" href="/">
+                <nav class="nav-menu mt-6 lg:mt-10" aria-label="Hauptnavigation">
+                    <a class="nav-link active" href="#overview" data-section-link="overview">
                         <span class="icon-box">⌂</span>
                         Übersicht
                     </a>
-                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#measurements">
+                    <a class="nav-link" href="#measurements" data-section-link="measurements">
                         <span class="icon-box">⌁</span>
                         Messwerte
                     </a>
-                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#charts">
+                    <a class="nav-link" href="#charts" data-section-link="charts">
                         <span class="icon-box">▥</span>
                         Diagramme
                     </a>
-                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#database">
+                    <a class="nav-link sub-link" href="#charts" data-chart-shift="-1">
+                        <span class="icon-box">←</span>
+                        Vortag anzeigen
+                    </a>
+                    <a class="nav-link sub-link" href="#charts" data-chart-today="1">
+                        <span class="icon-box">•</span>
+                        Heute anzeigen
+                    </a>
+                    <a class="nav-link" href="#database-section" data-section-link="database-section">
                         <span class="icon-box">◎</span>
                         Datenbank
                     </a>
-                    <a class="flex items-center gap-3 rounded-lg px-4 py-3 hover:bg-slate-50" href="#settings">
+                    <a class="nav-link" href="#settings" data-section-link="settings">
                         <span class="icon-box">⚙</span>
                         Einstellungen
                     </a>
                 </nav>
 
-                <div class="mt-8 rounded-lg border border-slate-200 bg-white p-4 text-sm lg:mt-auto">
-                    <div class="flex items-center gap-2 font-semibold text-slate-700">
+                <div class="status-panel mt-6 lg:mt-auto">
+                    <div class="flex items-center gap-2 font-semibold">
                         <span id="station-dot" class="h-2.5 w-2.5 rounded-full bg-slate-300"></span>
                         <span id="station-state">Station wird geprüft</span>
                     </div>
-                    <p id="station-detail" class="mt-2 text-xs text-slate-500">Warte auf Messdaten</p>
+                    <p id="station-detail" class="mt-2 text-xs">Warte auf Messdaten</p>
                 </div>
             </div>
         </aside>
 
-        <main class="px-5 py-6 sm:px-8 lg:px-10">
-            <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h2 class="text-3xl font-bold tracking-normal">Übersicht</h2>
-                    <p class="mt-2 text-sm text-slate-500">Aktuelle Raumklima-Messwerte</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-4 text-sm">
-                    <p class="font-semibold text-slate-600">Letzte Aktualisierung: <span id="last-updated">-</span></p>
-                    <div class="flex items-center gap-2 font-semibold text-brand-600">
-                        <span class="h-2.5 w-2.5 rounded-full bg-brand-500"></span>
-                        Live
+        <main class="px-4 py-5 sm:px-8 lg:px-10">
+            <section id="overview">
+                <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-normal">Übersicht</h2>
+                        <p class="mt-2 text-sm text-slate-500">Aktuelle Raumklima-Messwerte</p>
                     </div>
-                </div>
-            </header>
+                    <div class="flex flex-wrap items-center gap-4 text-sm">
+                        <p class="font-semibold text-slate-600">Letzte Aktualisierung: <span id="last-updated">-</span></p>
+                        <div class="flex items-center gap-2 font-semibold text-brand-600">
+                            <span class="h-2.5 w-2.5 rounded-full bg-brand-500"></span>
+                            Live
+                        </div>
+                    </div>
+                </header>
 
-            <section class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-                <article class="metric-card">
-                    <div class="metric-icon">♨</div>
-                    <p class="metric-label">Temperatur</p>
-                    <p class="metric-value"><span id="temperature-current">-</span> <span>°C</span></p>
-                    <p class="metric-foot">Aktuell</p>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-icon">♢</div>
-                    <p class="metric-label">Luftfeuchtigkeit</p>
-                    <p class="metric-value"><span id="humidity-current">-</span> <span>%</span></p>
-                    <p class="metric-foot">Aktuell</p>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-icon">◴</div>
-                    <p class="metric-label">Luftdruck</p>
-                    <p class="metric-value"><span id="pressure-current">-</span> <span>hPa</span></p>
-                    <p class="metric-foot">Aktuell</p>
-                </article>
-                <article class="metric-card">
-                    <div class="metric-icon">CO₂</div>
-                    <p class="metric-label">CO₂</p>
-                    <p class="metric-value"><span id="co2-current">-</span> <span>ppm</span></p>
-                    <p class="metric-foot">Aktuell</p>
-                </article>
+                <div class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+                    <article class="metric-card">
+                        <div class="metric-icon">♨</div>
+                        <p class="metric-label">Temperatur</p>
+                        <p class="metric-value"><span id="temperature-current">-</span> <span>°C</span></p>
+                        <p class="metric-foot">Aktuell</p>
+                    </article>
+                    <article class="metric-card">
+                        <div class="metric-icon">♢</div>
+                        <p class="metric-label">Luftfeuchtigkeit</p>
+                        <p class="metric-value"><span id="humidity-current">-</span> <span>%</span></p>
+                        <p class="metric-foot">Aktuell</p>
+                    </article>
+                    <article class="metric-card">
+                        <div class="metric-icon">◴</div>
+                        <p class="metric-label">Luftdruck</p>
+                        <p class="metric-value"><span id="pressure-current">-</span> <span>hPa</span></p>
+                        <p class="metric-foot">Aktuell</p>
+                    </article>
+                    <article id="co2-card" class="metric-card co2-good">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="metric-icon">CO₂</div>
+                            <span id="co2-status-pill" class="status-pill">Gut</span>
+                        </div>
+                        <p class="metric-label">CO₂</p>
+                        <p class="metric-value"><span id="co2-current">-</span> <span>ppm</span></p>
+                        <div class="co2-scale mt-5">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <p id="co2-status-text" class="metric-foot">Ampel: grün unter 800 ppm</p>
+                    </article>
+                </div>
             </section>
 
-            <section id="charts" class="mt-5 grid gap-5 xl:grid-cols-3">
-                <article class="panel">
-                    <div class="flex items-center justify-between">
-                        <h3 class="panel-title">Temperatur (°C)</h3>
-                        <span class="time-select">24h</span>
+            <section id="charts" class="mt-5">
+                <div class="panel">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div>
+                            <h3 class="panel-title">Diagramme</h3>
+                            <p id="chart-window-label" class="mt-1 text-sm text-slate-500">24-Stunden-Fenster wird geladen</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="control-button" id="chart-prev-day">← Vortag</button>
+                            <button class="control-button" id="chart-today">Heute</button>
+                            <button class="control-button" id="chart-next-day">Nächster Tag →</button>
+                        </div>
                     </div>
-                    <canvas id="temperature-chart" class="mt-5 h-64 w-full"></canvas>
-                </article>
-                <article class="panel">
-                    <div class="flex items-center justify-between">
-                        <h3 class="panel-title">Luftfeuchtigkeit (%)</h3>
-                        <span class="time-select">24h</span>
+                    <div id="chart-selection" class="selection-box mt-4">
+                        Klicke auf einen Punkt im Diagramm, um Zeit und Messwert zu sehen.
                     </div>
-                    <canvas id="humidity-chart" class="mt-5 h-64 w-full"></canvas>
-                </article>
-                <article class="panel">
-                    <div class="flex items-center justify-between">
-                        <h3 class="panel-title">CO₂ (ppm)</h3>
-                        <span class="time-select">24h</span>
-                    </div>
-                    <canvas id="co2-chart" class="mt-5 h-64 w-full"></canvas>
-                </article>
+                </div>
+
+                <div class="mt-5 grid gap-5 xl:grid-cols-3">
+                    <article class="panel chart-panel">
+                        <div class="flex items-center justify-between">
+                            <h3 class="panel-title">Temperatur (°C)</h3>
+                            <span class="time-select">24h</span>
+                        </div>
+                        <canvas id="temperature-chart" class="chart-canvas mt-5"></canvas>
+                    </article>
+                    <article class="panel chart-panel">
+                        <div class="flex items-center justify-between">
+                            <h3 class="panel-title">Luftfeuchtigkeit (%)</h3>
+                            <span class="time-select">24h</span>
+                        </div>
+                        <canvas id="humidity-chart" class="chart-canvas mt-5"></canvas>
+                    </article>
+                    <article class="panel chart-panel">
+                        <div class="flex items-center justify-between">
+                            <h3 class="panel-title">CO₂ (ppm)</h3>
+                            <span class="time-select">24h</span>
+                        </div>
+                        <canvas id="co2-chart" class="chart-canvas mt-5"></canvas>
+                    </article>
+                </div>
             </section>
 
             <section id="measurements" class="panel mt-5 overflow-hidden">
-                <div class="flex items-center justify-between">
-                    <h3 class="panel-title">Letzte Messwerte</h3>
-                    <button id="refresh-button" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">Aktualisieren</button>
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="panel-title">Letzte Messwerte</h3>
+                        <p class="mt-1 text-sm text-slate-500">Die letzten acht empfangenen Datensätze</p>
+                    </div>
+                    <button id="refresh-button" class="control-button">Aktualisieren</button>
                 </div>
                 <div class="mt-4 overflow-x-auto">
-                    <table id="database" class="w-full min-w-[780px] text-left text-sm">
-                        <thead class="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-400">
+                    <table class="data-table w-full min-w-[780px] text-left text-sm">
+                        <thead>
                             <tr>
-                                <th class="py-3 pr-4">Zeit</th>
-                                <th class="px-4 py-3">Temperatur (°C)</th>
-                                <th class="px-4 py-3">Luftfeuchtigkeit (%)</th>
-                                <th class="px-4 py-3">Luftdruck (hPa)</th>
-                                <th class="py-3 pl-4">CO₂ (ppm)</th>
+                                <th>Zeit</th>
+                                <th>Temperatur (°C)</th>
+                                <th>Luftfeuchtigkeit (%)</th>
+                                <th>Luftdruck (hPa)</th>
+                                <th>CO₂ (ppm)</th>
                             </tr>
                         </thead>
-                        <tbody id="measurements-table" class="divide-y divide-slate-100 text-slate-700">
+                        <tbody id="measurements-table">
                             <tr>
-                                <td class="py-6 text-slate-400" colspan="5">Messwerte werden geladen</td>
+                                <td class="empty-cell" colspan="5">Messwerte werden geladen</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <section id="database" class="panel mt-5 overflow-hidden">
+            <section id="database-section" class="panel mt-5 overflow-hidden">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h3 class="panel-title">Alle Datenbankeinträge</h3>
@@ -179,28 +219,40 @@
                     </div>
                 </div>
                 <div class="mt-4 max-h-[28rem] overflow-auto">
-                    <table class="w-full min-w-[920px] text-left text-sm">
-                        <thead class="sticky top-0 z-10 border-b border-slate-200 bg-white text-xs uppercase tracking-wide text-slate-400">
+                    <table class="data-table w-full min-w-[920px] text-left text-sm">
+                        <thead>
                             <tr>
-                                <th class="py-3 pr-4">ID</th>
-                                <th class="px-4 py-3">Zeit</th>
-                                <th class="px-4 py-3">Gerät</th>
-                                <th class="px-4 py-3">Temperatur (°C)</th>
-                                <th class="px-4 py-3">Luftfeuchtigkeit (%)</th>
-                                <th class="px-4 py-3">Luftdruck (hPa)</th>
-                                <th class="py-3 pl-4">CO₂ (ppm)</th>
+                                <th>ID</th>
+                                <th>Zeit</th>
+                                <th>Gerät</th>
+                                <th>Temperatur (°C)</th>
+                                <th>Luftfeuchtigkeit (%)</th>
+                                <th>Luftdruck (hPa)</th>
+                                <th>CO₂ (ppm)</th>
                             </tr>
                         </thead>
-                        <tbody id="database-table" class="divide-y divide-slate-100 text-slate-700">
+                        <tbody id="database-table">
                             <tr>
-                                <td class="py-6 text-slate-400" colspan="7">Datenbankeinträge werden geladen</td>
+                                <td class="empty-cell" colspan="7">Datenbankeinträge werden geladen</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <section id="settings" class="sr-only">Einstellungen</section>
+            <section id="settings" class="panel mt-5">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="panel-title">Einstellungen</h3>
+                        <p class="mt-1 text-sm text-slate-500">Anzeige und Bedienung des Dashboards</p>
+                    </div>
+                    <label class="toggle-row">
+                        <span>Darkmode</span>
+                        <input id="darkmode-toggle" type="checkbox">
+                        <span class="toggle-track"></span>
+                    </label>
+                </div>
+            </section>
         </main>
     </div>
 
