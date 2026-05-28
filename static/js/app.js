@@ -32,7 +32,45 @@ const elements = {
 let chartEnd = new Date();
 let chartIsLive = true;
 let chartMeasurements = [];
-const chartRegistry = new Map();
+const charts = {};
+let chartPluginsRegistered = false;
+
+function registerChartPlugins() {
+    if (chartPluginsRegistered || typeof Chart === "undefined") {
+        return;
+    }
+
+    Chart.register({
+        id: "thresholdLines",
+        beforeDatasetsDraw(chart, args, options) {
+            const lines = options.lines || [];
+            if (!lines.length || !chart.chartArea || !chart.scales.y) {
+                return;
+            }
+
+            const { ctx, chartArea, scales } = chart;
+            ctx.save();
+            ctx.font = "11px Inter, system-ui, sans-serif";
+            ctx.setLineDash([6, 5]);
+            lines.forEach((line) => {
+                const y = scales.y.getPixelForValue(line.value);
+                if (y < chartArea.top || y > chartArea.bottom) {
+                    return;
+                }
+                ctx.strokeStyle = line.color;
+                ctx.fillStyle = line.color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(chartArea.left, y);
+                ctx.lineTo(chartArea.right, y);
+                ctx.stroke();
+                ctx.fillText(line.label, chartArea.left + 8, y - 6);
+            });
+            ctx.restore();
+        }
+    });
+    chartPluginsRegistered = true;
+}
 
 function formatValue(value, digits = 1) {
     if (value === null || value === undefined) {
@@ -211,157 +249,159 @@ function updateChartWindowLabel() {
     elements.chartNextDay.style.opacity = elements.chartNextDay.disabled ? "0.45" : "1";
 }
 
-function drawChart(canvas, measurements, selector, color, label, unit, decimals = 1) {
-    const ctx = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    ctx.scale(dpr, dpr);
-
-    const width = rect.width;
-    const height = rect.height;
+function chartColors() {
     const isDark = document.body.classList.contains("dark-mode");
-    const gridColor = isDark ? "#263445" : "#e2e8f0";
-    const textColor = isDark ? "#94a3b8" : "#64748b";
-    const padding = { top: 14, right: 18, bottom: 40, left: 50 };
+    return {
+        grid: isDark ? "#263445" : "#e2e8f0",
+        text: isDark ? "#94a3b8" : "#64748b",
+        tooltipBg: isDark ? "#e2e8f0" : "#0f172a",
+        tooltipText: isDark ? "#0f172a" : "#ffffff"
+    };
+}
+
+function chartPoints(measurements, selector) {
     const { start, end } = chartWindow();
-    const points = measurements
+    return measurements
         .slice()
         .map((measurement) => ({
-            measurement,
-            timestamp: new Date(measurement.timestamp),
-            value: selector(measurement)
+            x: new Date(measurement.timestamp).getTime(),
+            y: selector(measurement),
+            measurement
         }))
-        .filter((point) => !Number.isNaN(point.timestamp.getTime()))
-        .filter((point) => point.timestamp >= start && point.timestamp <= end)
-        .filter((point) => point.value !== null && point.value !== undefined)
-        .sort((a, b) => a.timestamp - b.timestamp);
+        .filter((point) => !Number.isNaN(point.x))
+        .filter((point) => point.x >= start.getTime() && point.x <= end.getTime())
+        .filter((point) => point.y !== null && point.y !== undefined)
+        .sort((a, b) => a.x - b.x);
+}
 
-    ctx.clearRect(0, 0, width, height);
-    ctx.font = "12px Inter, system-ui, sans-serif";
-    ctx.lineWidth = 1;
+function chartOptions(label, unit, decimals, thresholdLines = []) {
+    const colors = chartColors();
+    const { start, end } = chartWindow();
 
-    if (points.length < 2) {
-        ctx.fillStyle = textColor;
-        ctx.fillText("Noch zu wenige Messwerte in diesem 24h-Fenster", padding.left, height / 2);
-        chartRegistry.set(canvas, { points: [], label, unit, decimals });
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        parsing: false,
+        interaction: {
+            intersect: false,
+            mode: "nearest"
+        },
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: true,
+                backgroundColor: colors.tooltipBg,
+                titleColor: colors.tooltipText,
+                bodyColor: colors.tooltipText,
+                displayColors: false,
+                callbacks: {
+                    title: (items) => items.length ? formatTime(items[0].raw.measurement.timestamp) : "",
+                    label: (item) => `${label}: ${formatValue(item.raw.y, decimals)} ${unit}`
+                }
+            },
+            thresholdLines: {
+                lines: thresholdLines
+            }
+        },
+        scales: {
+            x: {
+                type: "linear",
+                min: start.getTime(),
+                max: end.getTime(),
+                grid: {
+                    color: colors.grid
+                },
+                ticks: {
+                    color: colors.text,
+                    maxTicksLimit: 5,
+                    callback: (value) => formatShortTime(new Date(Number(value)))
+                }
+            },
+            y: {
+                beginAtZero: false,
+                grid: {
+                    color: colors.grid
+                },
+                ticks: {
+                    color: colors.text,
+                    callback: (value) => Number(value).toFixed(decimals)
+                }
+            }
+        },
+        onClick: (event, activeElements, chart) => {
+            if (!activeElements.length) {
+                elements.chartSelection.textContent = "Kein Messpunkt ausgewählt. Klicke direkt auf einen Punkt im Diagramm.";
+                elements.chartSelection.dataset.userSelected = "";
+                return;
+            }
+            const point = chart.data.datasets[0].data[activeElements[0].index];
+            elements.chartSelection.textContent = `${label}: ${formatValue(point.y, decimals)} ${unit} am ${formatTime(point.measurement.timestamp)}`;
+            elements.chartSelection.dataset.userSelected = "1";
+        },
+        onHover: (event, activeElements) => {
+            event.native.target.style.cursor = activeElements.length ? "pointer" : "crosshair";
+        }
+    };
+}
+
+function renderChart(key, canvas, measurements, selector, color, label, unit, decimals = 1, thresholdLines = []) {
+    const points = chartPoints(measurements, selector);
+    const ctx = canvas.getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 260);
+    gradient.addColorStop(0, `${color}38`);
+    gradient.addColorStop(1, `${color}00`);
+    const dataset = {
+        label,
+        data: points,
+        borderColor: color,
+        backgroundColor: gradient,
+        borderWidth: 3,
+        fill: true,
+        tension: 0.32,
+        pointRadius: 3.5,
+        pointHoverRadius: 7,
+        pointHitRadius: 14,
+        pointBackgroundColor: color,
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 2
+    };
+
+    if (!charts[key]) {
+        charts[key] = new Chart(canvas, {
+            type: "line",
+            data: {
+                datasets: [dataset]
+            },
+            options: chartOptions(label, unit, decimals, thresholdLines)
+        });
         return;
     }
 
-    const values = points.map((point) => Number(point.value));
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min || 1;
-    const yMin = min - range * 0.2;
-    const yMax = max + range * 0.2;
-    const plotWidth = width - padding.left - padding.right;
-    const plotHeight = height - padding.top - padding.bottom;
-
-    const xForTime = (date) => padding.left + ((date.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * plotWidth;
-    const yFor = (value) => padding.top + (1 - (value - yMin) / (yMax - yMin)) * plotHeight;
-
-    ctx.strokeStyle = gridColor;
-    ctx.fillStyle = textColor;
-    for (let i = 0; i <= 4; i += 1) {
-        const y = padding.top + (i / 4) * plotHeight;
-        const axisLabel = yMax - (i / 4) * (yMax - yMin);
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(width - padding.right, y);
-        ctx.stroke();
-        ctx.fillText(axisLabel.toFixed(decimals), 6, y + 4);
-    }
-
-    for (let i = 0; i <= 4; i += 1) {
-        const x = padding.left + (i / 4) * plotWidth;
-        const date = new Date(start.getTime() + (i / 4) * (end.getTime() - start.getTime()));
-        ctx.beginPath();
-        ctx.moveTo(x, padding.top);
-        ctx.lineTo(x, height - padding.bottom);
-        ctx.stroke();
-        ctx.fillText(formatShortTime(date), x - 16, height - 10);
-    }
-
-    const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    gradient.addColorStop(0, `${color}33`);
-    gradient.addColorStop(1, `${color}00`);
-
-    const plotted = points.map((point) => ({
-        ...point,
-        x: xForTime(point.timestamp),
-        y: yFor(point.value)
-    }));
-
-    ctx.beginPath();
-    plotted.forEach((point, index) => {
-        if (index === 0) {
-            ctx.moveTo(point.x, point.y);
-        } else {
-            ctx.lineTo(point.x, point.y);
-        }
-    });
-    ctx.lineTo(plotted[plotted.length - 1].x, height - padding.bottom);
-    ctx.lineTo(plotted[0].x, height - padding.bottom);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    ctx.beginPath();
-    plotted.forEach((point, index) => {
-        if (index === 0) {
-            ctx.moveTo(point.x, point.y);
-        } else {
-            ctx.lineTo(point.x, point.y);
-        }
-    });
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.fillStyle = color;
-    plotted.forEach((point) => {
-        ctx.beginPath();
-        ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    chartRegistry.set(canvas, { points: plotted, label, unit, decimals });
+    charts[key].data.datasets = [dataset];
+    charts[key].options = chartOptions(label, unit, decimals, thresholdLines);
+    charts[key].update();
 }
 
 function updateCharts(measurements) {
     updateChartWindowLabel();
-    drawChart(elements.temperatureChart, measurements, (measurement) => measurement.bme280.temperature_c, "#16a34a", "Temperatur", "°C");
-    drawChart(elements.humidityChart, measurements, (measurement) => measurement.bme280.humidity_percent, "#2563eb", "Luftfeuchtigkeit", "%");
-    drawChart(elements.co2Chart, measurements, (measurement) => measurement.scd41.co2_ppm, "#7c3aed", "CO₂", "ppm", 0);
-}
-
-function selectChartPoint(canvas, clientX, clientY) {
-    const chart = chartRegistry.get(canvas);
-    if (!chart || !chart.points.length) {
+    if (typeof Chart === "undefined") {
+        elements.chartSelection.textContent = "Chart.js konnte nicht geladen werden. Prüfe die Internetverbindung des Browsers.";
         return;
     }
-
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
-    let nearest = null;
-    let nearestDistance = Infinity;
-
-    chart.points.forEach((point) => {
-        const distance = Math.hypot(point.x - x, point.y - y);
-        if (distance < nearestDistance) {
-            nearest = point;
-            nearestDistance = distance;
-        }
-    });
-
-    if (!nearest || nearestDistance > 32) {
-        elements.chartSelection.textContent = "Kein Messpunkt in der Nähe. Tippe direkt auf einen Punkt im Diagramm.";
-        return;
+    registerChartPlugins();
+    if (measurements.length < 2) {
+        elements.chartSelection.textContent = "Noch zu wenige Messwerte in diesem 24h-Fenster.";
+    } else if (!elements.chartSelection.dataset.userSelected) {
+        elements.chartSelection.textContent = "Bewege die Maus über einen Punkt oder tippe einen Punkt an, um Details zu sehen.";
     }
-
-    elements.chartSelection.textContent = `${chart.label}: ${formatValue(nearest.value, chart.decimals)} ${chart.unit} am ${formatTime(nearest.measurement.timestamp)}`;
+    renderChart("temperature", elements.temperatureChart, measurements, (measurement) => measurement.bme280.temperature_c, "#16a34a", "Temperatur", "°C");
+    renderChart("humidity", elements.humidityChart, measurements, (measurement) => measurement.bme280.humidity_percent, "#2563eb", "Luftfeuchtigkeit", "%");
+    renderChart("co2", elements.co2Chart, measurements, (measurement) => measurement.scd41.co2_ppm, "#7c3aed", "CO₂", "ppm", 0, [
+        { value: 800, color: "#f59e0b", label: "800 ppm" },
+        { value: 1200, color: "#dc2626", label: "1200 ppm" }
+    ]);
 }
 
 async function loadMeasurements() {
@@ -394,6 +434,7 @@ async function loadMeasurements() {
 function shiftChartWindow(days) {
     chartIsLive = false;
     chartEnd = new Date(chartEnd.getTime() + days * DAY_MS);
+    elements.chartSelection.dataset.userSelected = "";
     if (chartEnd.getTime() > Date.now()) {
         chartIsLive = true;
         chartEnd = new Date();
@@ -404,6 +445,7 @@ function shiftChartWindow(days) {
 function showToday() {
     chartIsLive = true;
     chartEnd = new Date();
+    elements.chartSelection.dataset.userSelected = "";
     loadMeasurements();
 }
 
@@ -444,16 +486,6 @@ document.querySelectorAll("[data-chart-today]").forEach((link) => {
 
 document.querySelectorAll("[data-section-link]").forEach((link) => {
     link.addEventListener("click", () => activateNavigation(link.dataset.sectionLink));
-});
-
-[elements.temperatureChart, elements.humidityChart, elements.co2Chart].forEach((canvas) => {
-    canvas.addEventListener("click", (event) => selectChartPoint(canvas, event.clientX, event.clientY));
-    canvas.addEventListener("touchstart", (event) => {
-        const touch = event.touches[0];
-        if (touch) {
-            selectChartPoint(canvas, touch.clientX, touch.clientY);
-        }
-    }, { passive: true });
 });
 
 window.addEventListener("resize", () => updateCharts(chartMeasurements));
