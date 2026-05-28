@@ -5,3 +5,5 @@ __pycache__/
 venv/
 raumklima.db
 *.db-journal
+config.py
+esp32/config.py
