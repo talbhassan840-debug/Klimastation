@@ -208,6 +208,14 @@ body {
     touch-action: manipulation;
 }
 
+.chart-panel {
+    overflow: hidden;
+}
+
+.chart-panel canvas {
+    margin-top: 1rem;
+}
+
 .data-table {
     border-collapse: separate;
     border-spacing: 0;

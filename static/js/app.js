@@ -252,10 +252,11 @@ function updateChartWindowLabel() {
 function chartColors() {
     const isDark = document.body.classList.contains("dark-mode");
     return {
-        grid: isDark ? "#263445" : "#e2e8f0",
+        grid: isDark ? "rgba(148, 163, 184, 0.18)" : "rgba(148, 163, 184, 0.22)",
         text: isDark ? "#94a3b8" : "#64748b",
         tooltipBg: isDark ? "#e2e8f0" : "#0f172a",
-        tooltipText: isDark ? "#0f172a" : "#ffffff"
+        tooltipText: isDark ? "#0f172a" : "#ffffff",
+        pointBorder: isDark ? "#111c2e" : "#ffffff"
     };
 }
 
@@ -310,22 +311,32 @@ function chartOptions(label, unit, decimals, thresholdLines = []) {
                 type: "linear",
                 min: start.getTime(),
                 max: end.getTime(),
-                grid: {
+                border: {
                     color: colors.grid
+                },
+                grid: {
+                    color: colors.grid,
+                    drawTicks: false
                 },
                 ticks: {
                     color: colors.text,
                     maxTicksLimit: 5,
+                    padding: 10,
                     callback: (value) => formatShortTime(new Date(Number(value)))
                 }
             },
             y: {
                 beginAtZero: false,
-                grid: {
+                border: {
                     color: colors.grid
+                },
+                grid: {
+                    color: colors.grid,
+                    drawTicks: false
                 },
                 ticks: {
                     color: colors.text,
+                    padding: 10,
                     callback: (value) => Number(value).toFixed(decimals)
                 }
             }
@@ -350,22 +361,25 @@ function renderChart(key, canvas, measurements, selector, color, label, unit, de
     const points = chartPoints(measurements, selector);
     const ctx = canvas.getContext("2d");
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 260);
-    gradient.addColorStop(0, `${color}38`);
+    const colors = chartColors();
+    gradient.addColorStop(0, `${color}20`);
     gradient.addColorStop(1, `${color}00`);
     const dataset = {
         label,
         data: points,
         borderColor: color,
         backgroundColor: gradient,
-        borderWidth: 3,
+        borderWidth: 2.5,
         fill: true,
-        tension: 0.32,
-        pointRadius: 3.5,
-        pointHoverRadius: 7,
-        pointHitRadius: 14,
+        tension: 0.35,
+        pointRadius: 2.2,
+        pointHoverRadius: 5.5,
+        pointHitRadius: 16,
         pointBackgroundColor: color,
-        pointBorderColor: "#ffffff",
-        pointBorderWidth: 2
+        pointBorderColor: colors.pointBorder,
+        pointBorderWidth: 0,
+        pointHoverBorderColor: colors.pointBorder,
+        pointHoverBorderWidth: 2
     };
 
     if (!charts[key]) {
